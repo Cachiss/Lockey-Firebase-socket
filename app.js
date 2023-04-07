@@ -5,7 +5,7 @@ import cors from "cors";
 import dotenv from "dotenv"
 
 //FIRESTORE FUNCTIONS
-import { getUsers } from "./services/firebase_service.js";
+import { createUser, deleteUser, getUsers, updateUser } from "./services/firebase_service.js";
 
 //FIREBASE ADMIN FUNCTIONS
 import { listAllUsersAuth } from "./services/firebase_admin.js";
@@ -32,6 +32,31 @@ io.on("connection", (socket) => {
   //list all users from firebase auth
   listAllUsersAuth().then((users) => socket.emit("get_users_auth", users));
 
+  socket.on("create_user", (data) => {
+    createUser(data).then(() => {
+      getUsers().then((users) => socket.emit("get_users", users));
+    });
+  });
+  socket.on("edit_user", (data) => {
+    console.log("edit_user", data);
+    updateUser(data.id, data).then(() => {
+      getUsers().then((users) => socket.emit("get_users", users));
+    });
+  });
+
+  socket.on("delete_user", (id) => {
+    console.log("delete_user", id);
+    deleteUser(id).then(() => {
+      getUsers().then((users) => socket.emit("get_users", users));
+    });
+  });
+
+  socket.on("test", (data) =>{
+    console.log(data)
+    //socket.emit("test", "mensaje enviado desde el backend")
+    //para que no se envie 2 veces el mensaje se usa broadcast
+    socket.emit("test", "mensaje enviado desde el backend")
+  })
   socket.on("disconnect", () => {
     console.log("user disconnected");
   });
