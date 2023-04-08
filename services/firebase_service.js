@@ -8,19 +8,33 @@ import {
    addDoc, 
    doc, 
    updateDoc, 
-   deleteDoc } 
+   deleteDoc,
+   onSnapshot } 
   from "firebase/firestore";
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import fs from 'fs';
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';dotenv.config();
+import 'firebase/firestore';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const firebaseConfig = JSON.parse(fs.readFileSync(join(__dirname, '..', 'lockey_firebase.json'), 'utf8'));
 const app = initializeApp(firebaseConfig);
 
 const db = getFirestore(app);
+
+
+
+export function listenerUsers (emit){ 
+  onSnapshot(collection(db, "users"), (querySnapshot) => {
+  console.log("paso 1");
+  querySnapshot.docChanges().forEach((change) => {
+    emit();
+  });
+});
+}
+
 
 export const getUsers = async () => {
   const querySnapshot = await getDocs(collection(db, "users"));

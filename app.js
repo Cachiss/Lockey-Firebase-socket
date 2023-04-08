@@ -5,7 +5,7 @@ import cors from "cors";
 import dotenv from "dotenv"
 
 //FIRESTORE FUNCTIONS
-import { createUser, deleteUser, getUsers, updateUser } from "./services/firebase_service.js";
+import { createUser, deleteUser, getUsers, listenerUsers, updateUser } from "./services/firebase_service.js";
 
 //FIREBASE ADMIN FUNCTIONS
 import { listAllUsersAuth } from "./services/firebase_admin.js";
@@ -25,6 +25,11 @@ const io = new Server(server, {
 });
 
 io.on("connection", (socket) => {
+  listenerUsers(async() => {
+    const users = await getUsers();
+    socket.emit("get_users", users);
+  })
+
   console.log("a user connected");
   //list all users from firestore
   getUsers().then((users) => socket.emit("get_users", users));
@@ -32,23 +37,17 @@ io.on("connection", (socket) => {
   //list all users from firebase auth
   listAllUsersAuth().then((users) => socket.emit("get_users_auth", users));
 
-  socket.on("create_user", (data) => {
-    createUser(data).then(() => {
-      getUsers().then((users) => socket.emit("get_users", users));
-    });
+  socket.on("create_user", async(data) => {
+    await createUser(data);
   });
-  socket.on("edit_user", (data) => {
+  socket.on("edit_user", async (data) => {
     console.log("edit_user", data);
-    updateUser(data.id, data).then(() => {
-      getUsers().then((users) => socket.emit("get_users", users));
-    });
+    await updateUser(data.id, data);
   });
 
-  socket.on("delete_user", (id) => {
+  socket.on("delete_user", async(id) => {
     console.log("delete_user", id);
-    deleteUser(id).then(() => {
-      getUsers().then((users) => socket.emit("get_users", users));
-    });
+    await deleteUser(id);
   });
 
   socket.on("test", (data) =>{
